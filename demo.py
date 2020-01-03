@@ -43,7 +43,7 @@ def turbulence(noise: np.ndarray, turb_size: int = 64):
     size = turb_size
     value = np.zeros(shape=noise.shape)
 
-    # # TODO: find bug
+    # TODO: use RegularGridInterpolator so that it can be extendable to 3D
     # if noise.ndim == 2:
     #     axes = [np.arange(length) for length in noise.shape]
     # elif noise.ndim == 3:
@@ -56,30 +56,32 @@ def turbulence(noise: np.ndarray, turb_size: int = 64):
     # while True:
     #     # adding log_{2}^{256} + 1 multi-scale noise
     #     # weight for low-frequency noise is higher than high-frequency noise
+    #     # new_coords = np.meshgrid(axes[1] / size, axes[0] / size)
     #     new_coords = np.meshgrid(axes[1] / size, axes[0] / size)
     #     new_coords = np.stack(new_coords, axis=-1)  # (H, W, 2) or (H, W, D, 3)
+    #     print(new_coords.shape)
     #     print(size)
-    #     # print(new_coords[0])
-    #     # print(new_coords[1])
     #     print('-----------')
+    #     if size == 4:
+    #         from IPython import embed; embed(); exit();
     #     value += interp_f(new_coords) * size
     #     size = size // 2
     #     if size == 0:
     #         break
 
-    assert noise.ndim == 2
-    H, W = noise.shape
-    x = np.arange(W)
-    y = np.arange(H)
-    f = interpolate.interp2d(y, x, noise.T)
+    # assert noise.ndim == 2
+    # H, W = noise.shape
+    # x = np.arange(W)
+    # y = np.arange(H)
+    # f = interpolate.interp2d(y, x, noise.T)
 
-    while True:
-        # adding log_{2}^{256} + 1 multi-scale noise
-        # weight for low-frequency noise is higher than high-frequency noise
-        value += f(x / size, y / size) * size
-        size = size // 2
-        if size == 0:
-            break
+    # while True:
+    #     # adding log_{2}^{256} + 1 multi-scale noise
+    #     # weight for low-frequency noise is higher than high-frequency noise
+    #     value += f(x / size, y / size) * size
+    #     size = size // 2
+    #     if size == 0:
+    #         break
 
     # x + x / 2 + x / 4 + ... = 2x, so normalize it by 2x
     noise_multi_scale = value / (turb_size * 2)
@@ -165,27 +167,27 @@ def generate_wood(parser: argparse.ArgumentParser):
     save_image(arr, 'wood.png')
 
 
-def generate_moving_cloud(parser: argparse.ArgumentParser):
-    args = parser.parse_args()
-    assert len(args.size) == 3
+# def generate_moving_cloud(parser: argparse.ArgumentParser):
+#     args = parser.parse_args()
+#     assert len(args.size) == 3
 
-    noise = generate_noise(args.size)
-    noise_multi_scale = turbulence(noise, 64)
-    # save_image(noise_multi_scale, 'noise_multi_scale.png')
+#     noise = generate_noise(args.size)
+#     noise_multi_scale = turbulence(noise, 64)
+#     # save_image(noise_multi_scale, 'noise_multi_scale.png')
 
-    hue = np.full(noise.shape, 169 / 255)
-    saturation = np.full(noise.shape, 255 / 255)
-    lightness = np.clip((192 / 255 + noise_multi_scale / 4),
-                        a_min=0.0, a_max=1.0)
-    hls_arr = np.stack([hue, lightness, saturation], axis=-1)
-    rgb_arr = np.empty_like(hls_arr)
+#     hue = np.full(noise.shape, 169 / 255)
+#     saturation = np.full(noise.shape, 255 / 255)
+#     lightness = np.clip((192 / 255 + noise_multi_scale / 4),
+#                         a_min=0.0, a_max=1.0)
+#     hls_arr = np.stack([hue, lightness, saturation], axis=-1)
+#     rgb_arr = np.empty_like(hls_arr)
 
-    for i in range(args.len_canvas):
-        for j in range(args.len_canvas):
-            # TODO: vectorize this operation
-            rgb_arr[i][j] = np.array(colorsys.hls_to_rgb(*hls_arr[i][j]))
+#     for i in range(args.len_canvas):
+#         for j in range(args.len_canvas):
+#             # TODO: vectorize this operation
+#             rgb_arr[i][j] = np.array(colorsys.hls_to_rgb(*hls_arr[i][j]))
 
-    # save_image(rgb_arr, 'cloud.png')
+#     # save_image(rgb_arr, 'cloud.png')
 
 
 if __name__ == "__main__":
